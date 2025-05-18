@@ -1,0 +1,4 @@
+[default]
+playwright_headless = false
+aws_s3_bucket = "flashlight-assets"
+aws_s3_prefix = "/assets/"

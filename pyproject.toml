@@ -1,0 +1,18 @@
+[project]
+name = "flashlight"
+version = "0.1.0"
+description = "Use browser automation and agents to assess CCPA opt-out compliance"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "dagster>=1.10.15",
+    "dagster-aws>=0.26.15",
+    "dagster-gemini>=0.0.3",
+    "dagster-webserver>=1.10.15",
+    "dynaconf>=3.2.11",
+    "fake-useragent>=2.2.0",
+    "loguru>=0.7.3",
+    "playwright>=1.52.0",
+    "rich>=14.0.0",
+]
