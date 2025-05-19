@@ -1,0 +1,23 @@
+[32m2025-05-19 00:08:55 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 480bc3f0-efcf-4d05-a404-5f34d8f2fe05 - 92541 - LOGS_CAPTURED - Started capturing logs in process (pid: 92541).
+[32m2025-05-19 00:08:55 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 480bc3f0-efcf-4d05-a404-5f34d8f2fe05 - 92541 - locate_privacy_policy - STEP_START - Started execution of step "locate_privacy_policy".
+[32m2025-05-19 00:08:55 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 480bc3f0-efcf-4d05-a404-5f34d8f2fe05 - locate_privacy_policy - Navigating to https://acer.com
+[32m2025-05-19 00:08:56.003[0m | [34m[1mDEBUG   [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m43[0m - [34m[1mUsing User-Agent: %s[0m
+[32m2025-05-19 00:08:57.556[0m | [1mINFO    [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m52[0m - [1mClosing BrowserContext...[0m
+[32m2025-05-19 00:08:57 -0700[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 480bc3f0-efcf-4d05-a404-5f34d8f2fe05 - 92541 - locate_privacy_policy - STEP_FAILURE - Execution of step "locate_privacy_policy" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "locate_privacy_policy"::
+
+NameError: name 'dedent' is not defined
+
+Stack Trace:
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
+    yield
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_utils/__init__.py", line 392, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 124, in locate_privacy_policy
+    dismiss_modals(page)
+  File "/Users/amrit/Desktop/CPPA/flashlight/utils/page_utils.py", line 39, in dismiss_modals
+    page.evaluate(dedent("""
+                  ^^^^^^
+[0m

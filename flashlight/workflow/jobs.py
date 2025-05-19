@@ -1,6 +1,6 @@
 from dagster import job
-from flashlight.workflow.assets import find_privacy_policy_link
+from flashlight.workflow.assets import locate_privacy_policy
 
 @job
 def my_simple_job():
-    find_privacy_policy_link()
+    locate_privacy_policy()

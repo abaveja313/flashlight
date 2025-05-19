@@ -1,0 +1,68 @@
+[32m2025-05-18 23:37:31 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - 90046 - LOGS_CAPTURED - Started capturing logs in process (pid: 90046).
+[32m2025-05-18 23:37:31 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - 90046 - locate_privacy_policy - STEP_START - Started execution of step "locate_privacy_policy".
+[32m2025-05-18 23:37:31 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Navigating to https://honda.com
+[32m2025-05-18 23:37:31.101[0m | [34m[1mDEBUG   [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m43[0m - [34m[1mUsing User-Agent: %s[0m
+[32m2025-05-18 23:37:43 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Captured footer screenshot: /var/folders/80/b9gdpndn453_3zzk624k7rf80000gn/T/tmpjj0htp56.png
+/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py:146: LangChainDeprecationWarning: The class `LLMChain` was deprecated in LangChain 0.1.17 and will be removed in 1.0. Use :meth:`~RunnableSequence, e.g., `prompt | llm`` instead.
+  chain = LLMChain(llm=llm.client, prompt=FIND_NEXT_CLICK_CHAT, output_parser=parser)
+[32m2025-05-18 23:37:43 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Starting click iteration (up to 5 steps) toward 'locate the privacy policy link'.
+[32m2025-05-18 23:37:43 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Step 1, prompting LLM with image /var/folders/80/b9gdpndn453_3zzk624k7rf80000gn/T/tmpjj0htp56.png
+/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/langchain/chains/llm.py:342: UserWarning: The predict_and_parse method is deprecated, instead pass an output parser directly to LLMChain.
+  warnings.warn(
+[32m2025-05-18 23:37:44 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Result: target='Privacy Notice', complete=False
+[32m2025-05-18 23:37:44 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Found 3 elements containing text 'Privacy Notice' to click.
+[32m2025-05-18 23:37:45 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - locate_privacy_policy - Clicked element 1/3 with text 'Privacy Notice'.
+[32m2025-05-18 23:38:15.014[0m | [1mINFO    [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m52[0m - [1mClosing BrowserContext...[0m
+[32m2025-05-18 23:38:15 -0700[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 3c9d77d1-e222-4791-8c1d-59d91c472fc0 - 90046 - locate_privacy_policy - STEP_FAILURE - Execution of step "locate_privacy_policy" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "locate_privacy_policy"::
+
+playwright._impl._errors.TimeoutError: Locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator("text=\"Privacy Notice\"").nth(1)
+    - locator resolved to <a target="”_blank”" href="https://www.honda.com/privacy/Privacy-Notice">Privacy Notice</a>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    58 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+
+
+Stack Trace:
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
+    yield
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_utils/__init__.py", line 392, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 147, in locate_privacy_policy
+    result = iterate_clicks(
+             ^^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 68, in iterate_clicks
+    if not click_elements_by_text(page, result.target, logger):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 40, in click_elements_by_text
+    locator.nth(i).click()
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/sync_api/_generated.py", line 15512, in click
+    self._sync(
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/_impl/_sync_base.py", line 115, in _sync
+    return task.result()
+           ^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/_impl/_locator.py", line 160, in click
+    return await self._frame.click(self._selector, strict=True, **params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/_impl/_frame.py", line 488, in click
+    await self._channel.send("click", locals_to_params(locals()))
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/_impl/_connection.py", line 61, in send
+    return await self._connection.wrap_api_call(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/playwright/_impl/_connection.py", line 528, in wrap_api_call
+    raise rewrite_error(error, f"{parsed_st['apiName']}: {error}") from None
+[0m

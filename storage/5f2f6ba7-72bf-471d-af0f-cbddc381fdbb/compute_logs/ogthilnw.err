@@ -1,0 +1,33 @@
+[32m2025-05-18 23:46:45 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - 90865 - LOGS_CAPTURED - Started capturing logs in process (pid: 90865).
+[32m2025-05-18 23:46:45 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - 90865 - locate_privacy_policy - STEP_START - Started execution of step "locate_privacy_policy".
+[32m2025-05-18 23:46:45 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - locate_privacy_policy - Navigating to https://honda.com
+[32m2025-05-18 23:46:45.791[0m | [34m[1mDEBUG   [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m43[0m - [34m[1mUsing User-Agent: %s[0m
+[32m2025-05-18 23:46:57 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - locate_privacy_policy - Captured footer screenshot: /var/folders/80/b9gdpndn453_3zzk624k7rf80000gn/T/tmp83mrp3a0.png
+/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py:145: LangChainDeprecationWarning: The class `LLMChain` was deprecated in LangChain 0.1.17 and will be removed in 1.0. Use :meth:`~RunnableSequence, e.g., `prompt | llm`` instead.
+  chain = LLMChain(llm=llm.client, prompt=FIND_NEXT_CLICK_CHAT, output_parser=parser)
+[32m2025-05-18 23:46:57 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - locate_privacy_policy - Starting click iteration (up to 5 steps) toward 'navigate to the privacy terms (US if regional)'.
+[32m2025-05-18 23:46:57 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - locate_privacy_policy - Step 1, prompting LLM with image /var/folders/80/b9gdpndn453_3zzk624k7rf80000gn/T/tmp83mrp3a0.png
+/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/langchain/chains/llm.py:342: UserWarning: The predict_and_parse method is deprecated, instead pass an output parser directly to LLMChain.
+  warnings.warn(
+[32m2025-05-18 23:46:59.363[0m | [1mINFO    [0m | [36mflashlight.workflow.resources.browser_manager[0m:[36mmanaged_context[0m:[36m52[0m - [1mClosing BrowserContext...[0m
+[32m2025-05-18 23:46:59 -0700[0m - dagster - [34mERROR[0m - [31m__ASSET_JOB - 5f2f6ba7-72bf-471d-af0f-cbddc381fdbb - 90865 - locate_privacy_policy - STEP_FAILURE - Execution of step "locate_privacy_policy" failed.
+
+dagster._core.errors.DagsterExecutionStepExecutionError: Error occurred while executing op "locate_privacy_policy"::
+
+AttributeError: 'FindNextClickOutput' object has no attribute 'reason'
+
+Stack Trace:
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_core/execution/plan/utils.py", line 56, in op_execution_error_boundary
+    yield
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/dagster/_utils/__init__.py", line 392, in iterate_with_context
+    next_output = next(iterator)
+                  ^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 146, in locate_privacy_policy
+    result = iterate_clicks(
+             ^^^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/flashlight/workflow/assets/find_privacy_policy.py", line 63, in iterate_clicks
+    logger.info(f"Result: target={result.target!r}, complete={result.complete}, reason={result.reason!r}")
+                                                                                        ^^^^^^^^^^^^^
+  File "/Users/amrit/Desktop/CPPA/.venv/lib/python3.11/site-packages/pydantic/main.py", line 989, in __getattr__
+    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
+[0m

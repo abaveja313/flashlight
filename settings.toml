@@ -2,3 +2,8 @@
 playwright_headless = false
 aws_s3_bucket = "flashlight-assets"
 aws_s3_prefix = "/assets/"
+aws_region = "us-east-2"
+llm_model_name = "gemini-2.0-flash"
+llm_temperature = 0.7
+llm_provider = "google"
+llm_api_key = "AIzaSyAqgSMbsYSqQVeC_R_XWDHKBRKL1j96cuQ"
