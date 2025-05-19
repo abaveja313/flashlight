@@ -185,3 +185,5 @@ cython_debug/
 .telemetry
 history
 schedules
+.nux
+storage
