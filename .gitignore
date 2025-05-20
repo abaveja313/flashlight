@@ -185,5 +185,9 @@ cython_debug/
 .telemetry
 history
 schedules
+logs
 .nux
 storage
+
+# Dynaconf
+.secrets.toml

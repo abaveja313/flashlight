@@ -1,21 +1,18 @@
 [project]
 name = "flashlight"
 version = "0.1.0"
-description = "Use browser automation and agents to assess CCPA opt-out compliance"
+description = "Automatically assess CCPA opt-out compliance using a mix of browser automation and agents"
+authors = [
+    { name = "Amrit Baveja", email = "abaveja@cs.stanford.edu" },
+]
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "beautifulsoup4>=4.13.4",
+    "browser-use[memory]>=0.1.48",
     "dagster>=1.10.15",
     "dagster-aws>=0.26.15",
     "dagster-webserver>=1.10.15",
     "dynaconf>=3.2.11",
-    "fake-useragent>=2.2.0",
-    "langchain>=0.3.25",
-    "langchain-anthropic>=0.3.13",
-    "langchain-google-genai>=2.0.10",
-    "langchain-openai>=0.3.17",
-    "loguru>=0.7.3",
-    "playwright>=1.52.0",
-    "rich>=14.0.0",
+    "langchain>=0.3.22",
+    "managed-browser>=0.1.3",
 ]

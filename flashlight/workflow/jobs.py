@@ -1,6 +1,8 @@
 from dagster import job
-from flashlight.workflow.assets import locate_privacy_policy
+from flashlight.workflow.assets import analyze_footer_screenshot, find_privacy_policy
+
 
 @job
-def my_simple_job():
-    locate_privacy_policy()
+def ccpa_analysis():
+    find_privacy_policy()
+    analyze_footer_screenshot()

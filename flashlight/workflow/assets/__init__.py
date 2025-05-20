@@ -1,2 +1,2 @@
-import dagster as dg
-from flashlight.workflow.assets.find_privacy_policy import locate_privacy_policy
+from flashlight.workflow.assets.extract_privacy_policy import find_privacy_policy
+from flashlight.workflow.assets.analyze_footer import analyze_footer_screenshot
