@@ -3,7 +3,11 @@ playwright_headless = false
 aws_s3_bucket = "flashlight-assets"
 aws_s3_prefix = "/assets/"
 aws_region = "us-east-2"
-llm_model_name = "gpt-4.1"
+llm_model_name = "gpt-4.1-mini"
 llm_temperature = 0.7
 llm_provider = "openai"
-
+mini_llm_provider = "google"
+mini_llm_temperature = 0.7
+mini_llm_model_name = "gemini-2.5-flash-preview-05-20"
+html_extractor_strategy = "markdown"
+preview_length = 100000

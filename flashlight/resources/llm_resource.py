@@ -20,18 +20,18 @@ class LLMResource(ConfigurableResource):
         Initialize the chat client according to the configured provider.
         """
         if self.provider == "openai":
-            os.environ["OPENAI_API_KEY"] = self.api_key
             from langchain_openai import ChatOpenAI
 
             self._client = ChatOpenAI(
+                api_key=self.api_key,
                 model=self.model_name,
                 temperature=self.temperature,
             )
         elif self.provider == "google":
-            os.environ["GOOGLE_API_KEY"] = self.api_key
             from langchain_google_genai import ChatGoogleGenerativeAI
 
             self._client = ChatGoogleGenerativeAI(
+                google_api_key=self.api_key,
                 model=self.model_name,
                 temperature=self.temperature,
             )

@@ -6,7 +6,7 @@ from dagster import AssetIn, AssetOut, AssetExecutionContext, Output, MetadataVa
 
 from flashlight.utils.file_utils import image_to_data_uri
 from flashlight.utils.prompts import ContainsPrivacyIconOutput, CONTAINS_PRIVACY_ICON
-from flashlight.workflow.resources import domain_partitions, LLMResource
+from flashlight.resources import domain_partitions, LLMResource
 
 
 @dg.multi_asset(
@@ -25,12 +25,16 @@ from flashlight.workflow.resources import domain_partitions, LLMResource
             dagster_type=bool,
             metadata={"ext": ".png"},
             key="footer_privacy_icon",
-            description="Whether the footer contains a link with the CCPA privacy choices icon"
+            description="Whether the footer contains a link with the CCPA privacy choices icon",
         )
-    }
+    },
 )
-async def analyze_footer_screenshot(context: AssetExecutionContext, footer_screenshot: Path):
-    assert footer_screenshot.exists(), "Footer screenshot cannot be analyzed as it was not downloaded"
+async def analyze_footer_screenshot(
+    context: AssetExecutionContext, footer_screenshot: Path
+):
+    assert (
+        footer_screenshot.exists()
+    ), "Footer screenshot cannot be analyzed as it was not downloaded"
     try:
         llm = cast(LLMResource, context.resources.llm).client
         llm_with_parser = llm.with_structured_output(ContainsPrivacyIconOutput)
@@ -38,9 +42,9 @@ async def analyze_footer_screenshot(context: AssetExecutionContext, footer_scree
 
         encoded_image = image_to_data_uri(path=footer_screenshot, delete=True)
 
-        result = cast(ContainsPrivacyIconOutput, await chain.ainvoke({
-            "image_url": encoded_image
-        }))
+        result = cast(
+            ContainsPrivacyIconOutput, await chain.ainvoke({"image_url": encoded_image})
+        )
 
         yield Output(
             result.uses_icon,
@@ -48,7 +52,7 @@ async def analyze_footer_screenshot(context: AssetExecutionContext, footer_scree
             metadata={
                 "has_icon": MetadataValue.bool(result.uses_icon),
                 "explanation": MetadataValue.text(result.explanation),
-            }
+            },
         )
     finally:
         footer_screenshot.unlink(missing_ok=True)

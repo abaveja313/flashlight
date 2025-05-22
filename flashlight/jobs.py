@@ -1,5 +1,5 @@
 from dagster import job
-from flashlight.workflow.assets import analyze_footer_screenshot, find_privacy_policy
+from flashlight.assets import analyze_footer_screenshot, find_privacy_policy
 
 
 @job

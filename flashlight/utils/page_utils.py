@@ -3,24 +3,28 @@ import tempfile
 from pathlib import Path
 from typing import Sequence
 
-from playwright.async_api import Page, FloatRect, BrowserContext
+from playwright.async_api import Page, FloatRect
 
 
-async def get_or_create_page(context: BrowserContext) -> Page:
-    if len(context.pages) > 0 and context.pages[0].url == 'about:blank':
-        return context.pages[0]  # we can use this
-    return await context.new_page()
+async def scroll_to_bottom(
+        page: Page, pause_time_ms: float = 1000, max_rounds: int = 100
+):
+    """
+    Repeatedly scrolls to the bottom of the page until no new content loads.
+    """
+    prev_height = await page.evaluate("() => document.body.scrollHeight")
 
-
-async def scroll_to_bottom(page: Page, pause_time: float = 1.0, max_loops: int = 50):
-    last_height = page.evaluate("() => document.body.scrollHeight")
-    for _ in range(max_loops):
+    for i in range(max_rounds):
         await page.evaluate("() => window.scrollTo(0, document.body.scrollHeight)")
-        await page.wait_for_timeout(pause_time)
+        await page.wait_for_timeout(pause_time_ms)
+
+        # Check if page grew
         new_height = await page.evaluate("() => document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
+        if new_height == prev_height:
+            return i + 1
+        prev_height = new_height
+
+    return -1
 
 
 async def screenshot_region(
@@ -31,21 +35,25 @@ async def screenshot_region(
         indexes: Sequence[int],
 ) -> Path:
     # Fix: https://github.com/microsoft/playwright/issues/28995
-    os.environ['PW_TEST_SCREENSHOT_NO_FONTS_READY'] = '1'
+    os.environ["PW_TEST_SCREENSHOT_NO_FONTS_READY"] = "1"
 
     # --- Validation ---
     if number_dividers < 1:
         raise ValueError(f"number_dividers must be ≥1 (got {number_dividers})")
 
     if direction not in ("vertical", "horizontal"):
-        raise ValueError(f"direction must be 'vertical' or 'horizontal' (got {direction!r})")
+        raise ValueError(
+            f"direction must be 'vertical' or 'horizontal' (got {direction!r})"
+        )
 
     if not indexes:
         raise ValueError("indexes must be a non-empty sequence of ints")
     sorted_ix = sorted(indexes)
 
     if any(i < 0 or i >= number_dividers for i in sorted_ix):
-        raise ValueError(f"All indexes must be in [0, {number_dividers - 1}] (got {indexes})")
+        raise ValueError(
+            f"All indexes must be in [0, {number_dividers - 1}] (got {indexes})"
+        )
 
     if sorted_ix != list(range(sorted_ix[0], sorted_ix[-1] + 1)):
         raise ValueError(f"Indexes must form a contiguous range (got {indexes})")

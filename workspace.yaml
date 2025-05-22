@@ -1,2 +1,2 @@
 load_from:
-  - python_file: flashlight/workflow/definitions.py
+  - python_file: flashlight/definitions.py

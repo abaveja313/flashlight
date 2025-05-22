@@ -86,8 +86,7 @@ class S3FileIOManager(ConfigurableIOManager):
         suffix = os.path.splitext(key)[1]
 
         tmp = os.path.join(
-            tempfile.gettempdir(),
-            f"dagster_temp_{uuid.uuid4().hex}{suffix}"
+            tempfile.gettempdir(), f"dagster_temp_{uuid.uuid4().hex}{suffix}"
         )
         client.download_file(Bucket=self.s3_bucket, Key=key, Filename=tmp)
         context.log.info(f"Downloaded {key} to {tmp}")

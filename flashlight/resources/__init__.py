@@ -6,7 +6,8 @@ from dagster import resource, DynamicPartitionsDefinition
 from dynaconf import Dynaconf
 from managed_browser import BrowserManager
 
-from flashlight.workflow.resources.llm_resource import LLMResource
+from flashlight.resources.llm_resource import LLMResource
+from flashlight.resources.text_extractor import TextExtractor
 
 settings = Dynaconf(
     settings_files=["settings.toml", ".secrets.toml"],
