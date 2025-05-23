@@ -7,7 +7,7 @@ from playwright.async_api import Page, FloatRect
 
 
 async def scroll_to_bottom(
-        page: Page, pause_time_ms: float = 1000, max_rounds: int = 100
+    page: Page, pause_time_ms: float = 1000, max_rounds: int = 100
 ):
     """
     Repeatedly scrolls to the bottom of the page until no new content loads.
@@ -28,11 +28,11 @@ async def scroll_to_bottom(
 
 
 async def screenshot_region(
-        *,
-        page: Page,
-        number_dividers: int,
-        direction: str,
-        indexes: Sequence[int],
+    *,
+    page: Page,
+    number_dividers: int,
+    direction: str,
+    indexes: Sequence[int],
 ) -> Path:
     # Fix: https://github.com/microsoft/playwright/issues/28995
     os.environ["PW_TEST_SCREENSHOT_NO_FONTS_READY"] = "1"

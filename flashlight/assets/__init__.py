@@ -1,5 +1,5 @@
 from flashlight.assets.extract_policy import (
-    find_privacy_policy,
+    prepare_window,
     extract_privacy_policy,
     extract_ccpa_policy,
 )

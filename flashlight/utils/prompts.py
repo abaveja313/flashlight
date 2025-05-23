@@ -25,6 +25,7 @@ class ExtractedPrivacyPolicyOutput(BaseModel):
     """
     Output schema for extracted privacy policy.
     """
+
     start_line: int
     end_line: int
     explanation: str
@@ -53,12 +54,14 @@ EXTRACT_PRIVACY_POLICY_TEXT = ChatPromptTemplate.from_messages(
     [
         {
             "role": "system",
-            "content": textwrap.dedent("""
+            "content": textwrap.dedent(
+                """
         You are a data extraction assistant. You will be provided with all the text extracted from the privacy policy
         page of a website. Provide the starting line and ending line of the privacy policy text.
         
         Data will be provided in pairs: [(line_no, content)...]
-        """),
+        """
+            ),
         },
         {"role": "user", "content": "{contents}"},
     ]

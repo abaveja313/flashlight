@@ -22,12 +22,17 @@ from playwright.async_api import Page
 
 from flashlight.resources import settings, LLMResource, domain_partitions, TextExtractor
 from flashlight.utils.page_utils import screenshot_region, scroll_to_bottom
-from flashlight.utils.prompts import ContainsCCPARightsOutput, EXTRACT_CCPA_RIGHTS, ExtractedPrivacyPolicyOutput, \
-    EXTRACT_PRIVACY_POLICY_TEXT
+from flashlight.utils.prompts import (
+    ContainsCCPARightsOutput,
+    EXTRACT_CCPA_RIGHTS,
+    ExtractedPrivacyPolicyOutput,
+    EXTRACT_PRIVACY_POLICY_TEXT,
+)
+from flashlight.resources.action_recorder import PageActionRecorder
 
 
 async def remove_overlays(
-        llm: BaseChatModel, session: ManagedSession, page: Page
+    llm: BaseChatModel, session: ManagedSession, page: Page
 ) -> Tuple[Page, int]:
     adjust_viewport_agent = session.make_agent(
         llm=llm,
@@ -57,16 +62,16 @@ async def remove_overlays(
 
 
 async def navigate_to_privacy_policy(
-        llm: BaseChatModel, session: ManagedSession, page: Page
+    llm: BaseChatModel, session: ManagedSession, page: Page
 ):
     # Todo fails on some privacy cengters like airbnb
     navigate_to_policy = session.make_agent(
         llm=llm,
         start_page=page,
         task="Navigate to the page containing the privacy policy / notice. "
-             "If there are multiple regions available, navigate to the US version."
-             " When the page contains a comprehensive privacy policy document, rather than a link to such a document, "
-             " switch to that tab (if necessary), and your job is complete",
+        "If there are multiple regions available, navigate to the US version."
+        " When the page contains a comprehensive privacy policy document, rather than a link to such a document, "
+        " switch to that tab (if necessary), and your job is complete",
         controller=Controller(
             exclude_actions=["search_google", "save_pdf", "drag_drop"]
         ),
@@ -80,7 +85,7 @@ async def navigate_to_privacy_policy(
 
 
 async def attempt_ccpa_extraction(
-        llm: BaseChatModel, extractor: TextExtractor, text: str, logger
+    llm: BaseChatModel, extractor: TextExtractor, text: str, logger
 ) -> Tuple[Optional[str], str]:
     logger.debug("Attempting CCPA Extraction from text: %s", text)
     llm_with_parser = llm.with_structured_output(ContainsCCPARightsOutput)
@@ -88,8 +93,12 @@ async def attempt_ccpa_extraction(
     prepped = extractor.prep_llm_input(text)
     result = cast(ContainsCCPARightsOutput, await chain.ainvoke({"contents": prepped}))
     if result.contains_ccpa_rights:
-        return (extractor.parse_region(text, start_line=result.start_line, end_line=result.end_line),
-                result.explanation)
+        return (
+            extractor.parse_region(
+                text, start_line=result.start_line, end_line=result.end_line
+            ),
+            result.explanation,
+        )
     return None, result.explanation
 
 
@@ -104,13 +113,6 @@ async def attempt_ccpa_extraction(
             description="Number of actions to remove overlays",
             metadata={"ext": ".pkl"},
         ),
-        "privacy_policy_url": AssetOut(
-            dagster_type=str,
-            group_name="privacy_policy",
-            io_manager_key="io_manager",
-            description="Extracted privacy policy URL",
-            metadata={"ext": ".pkl"},
-        ),
         "footer_screenshot": AssetOut(
             dagster_type=Path,
             group_name="footer",
@@ -118,14 +120,14 @@ async def attempt_ccpa_extraction(
             description="Screenshot of the footer section",
             metadata={"ext": ".png"},
         ),
-        "privacy_policy_html": AssetOut(
+        "prepared_window_replay": AssetOut(
             dagster_type=str,
-            group_name="privacy_policy",
+            group_name="replay",
             io_manager_key="io_manager",
-            description="Extracted privacy policy HTML",
+            description="Prepared window replay",
             metadata={"ext": ".pkl"},
         ),
-        "privacy_policy_trace": AssetOut(
+        "prepare_window_trace": AssetOut(
             dagster_type=Path,
             group_name="traces",
             io_manager_key="io_manager",
@@ -148,7 +150,7 @@ async def attempt_ccpa_extraction(
         ),
     },
 )
-async def find_privacy_policy(context: AssetExecutionContext):
+async def prepare_window(context: AssetExecutionContext):
     # Extract resources and config
     bm = cast(BrowserManager, context.resources.browser_manager)
     llm = cast(LLMResource, context.resources.llm).client
@@ -161,46 +163,108 @@ async def find_privacy_policy(context: AssetExecutionContext):
     load_timeout_ms = context.op_config["load_timeout_ms"]
     operation_delay_ms = context.op_config["operation_delay_ms"]
 
-    context.log.info(f"Finding privacy policy from: {url}")
+    context.log.info(f"Preparing window for: {url}")
 
     tracing_out = tempfile.NamedTemporaryFile(prefix="trace_", mode="w+b", delete=False)
 
     async with bm.managed_context(
-            use_tracing=True, tracing_output_path=tracing_out.name
+        use_tracing=True, tracing_output_path=tracing_out.name
     ) as session:
-        session = cast(ManagedSession, session)
-        page = await session.browser_context.new_page()
+        async with PageActionRecorder(session.browser_context) as recorder:
+            session = cast(ManagedSession, session)
+            page = await session.browser_context.new_page()
 
-        # Navigate to the initial URL
-        context.log.info(f"Navigating to website: {url}")
+            # Navigate to the initial URL
+            context.log.info(f"Navigating to website: {url}")
 
-        # Usually works better to wait until 'domcontentloaded' - 'networkidle' hangs a lot more IMO
-        await page.goto(url, wait_until="domcontentloaded", timeout=load_timeout_ms)
-        await page.wait_for_timeout(operation_delay_ms)
+            await page.goto(url, wait_until="domcontentloaded", timeout=load_timeout_ms)
+            await page.wait_for_timeout(operation_delay_ms)
 
-        # TODO @amrit - being casted to a bool IDK why
-        page, remove_ops = await remove_overlays(
-            llm, session, page
-        )
-        context.log.info(f"Removed overlays in {remove_ops} operations")
+            page, remove_ops = await remove_overlays(llm, session, page)
+            context.log.info(f"Removed overlays in {remove_ops} operations")
 
-        yield Output(remove_ops, output_name="remove_overlay_action_count")
-        await scroll_to_bottom(
-            page=page,
-            pause_time_ms=settings.get("pause_time_ms", 200),
-            max_rounds=settings.get("max_scroll_rounds", 50),
-        )
-        await page.wait_for_timeout(operation_delay_ms)
+            yield Output(remove_ops, output_name="remove_overlay_action_count")
+            await scroll_to_bottom(
+                page=page,
+                pause_time_ms=settings.get("pause_time_ms", 200),
+                max_rounds=settings.get("max_scroll_rounds", 50),
+            )
+            await page.wait_for_timeout(operation_delay_ms)
 
-        # Take a screenshot of the footer for navigation
+            yield Output(
+                await recorder.snapshot(use_json=True), output_name="prepared_window_replay"
+            )
+
+            # Take a screenshot of the footer for navigation
         footer_screenshot = await screenshot_region(
             page=page,
             number_dividers=4,
             direction="vertical",
             indexes=(1, 2, 3),  # Bottom 3/4
         )
+
         context.log.info(f"Captured footer screenshot: {footer_screenshot}")
-        yield Output(footer_screenshot, output_name="footer_screenshot")
+
+    yield Output(pathlib.Path(tracing_out.name), output_name="prepare_windoe_trace")
+
+
+@dg.multi_asset(
+    required_resource_keys={"browser_manager", "mini_llm", "llm", "text_extractor"},
+    partitions_def=domain_partitions,
+    ins={
+        "prepared_window_replay": AssetIn(
+            key="prepared_window_replay",
+            dagster_type=str,
+            metadata={"ext": ".pkl"},
+        )
+    },
+    outs={
+        "privacy_policy_url": AssetOut(
+            dagster_type=str,
+            metadata={"ext": ".pkl"},
+            description="Privacy policy URL",
+            io_manager_key="io_manager",
+            group_name="privacy_policy",
+        ),
+        "privacy_policy_text": AssetOut(
+            dagster_type=str,
+            group_name="privacy_policy",
+            io_manager_key="io_manager",
+            description="Privacy policy text",
+            metadata={"ext": ".pkl"},
+        ),
+        "privacy_policy_html": AssetOut(
+            dagster_type=str,
+            group_name="privacy_policy",
+            io_manager_key="io_manager",
+            description="Privacy policy html",
+            metadata={"ext": ".pkl"},
+        ),
+        "privacy_policy_trace": AssetOut(
+            dagster_type=Path,
+            group_name="privacy_policy",
+            io_manager_key="io_manager",
+            description="Privacy policy trace",
+            metadata={"ext": ".pkl"},
+        ),
+    },
+)
+async def extract_privacy_policy(
+    context: AssetExecutionContext, prepared_window_replay: str
+):
+    mini_llm = cast(LLMResource, context.resources.mini_llm).client
+    llm = cast(LLMResource, context.resources.llm).client
+    extractor = cast(TextExtractor, context.resources.text_extractor)
+    bm = cast(BrowserManager, context.resources.browser_manager)
+
+    tracing_out = tempfile.NamedTemporaryFile(prefix="trace_", mode="w+b", delete=False)
+    async with bm.managed_context(
+        use_tracing=True, tracing_output_path=tracing_out.name
+    ) as session:
+        page = await PageActionRecorder.replay(
+            browser_context=session.browser_context, actions_json=prepared_window_replay
+        )
+
         page = await navigate_to_privacy_policy(llm=llm, session=session, page=page)
 
         privacy_url = page.url
@@ -213,50 +277,31 @@ async def find_privacy_policy(context: AssetExecutionContext):
         )
 
         # Page contents
-        contents = await page.content()
-        yield Output(contents, output_name="privacy_policy_html")
+    yield Output(
+        tracing_out,
+        output_name="privacy_policy_trace",
+    )
 
-    yield Output(pathlib.Path(tracing_out.name), output_name="privacy_policy_trace")
-
-
-@dg.multi_asset(
-    required_resource_keys={"mini_llm", "text_extractor"},
-    partitions_def=domain_partitions,
-    ins={
-        "privacy_policy_html": AssetIn(
-            dagster_type=str,
-            key="privacy_policy_html",
-            metadata={"ext": ".pkl"},
-        ),
-    },
-    outs={
-        "privacy_policy_text": AssetOut(
-            dagster_type=str,
-            group_name="privacy_policy",
-            io_manager_key="io_manager",
-            description="Privacy policy text",
-            metadata={"ext": ".pkl"},
-        ),
-    },
-)
-async def extract_privacy_policy(context: AssetExecutionContext, privacy_policy_html: str):
-    mini_llm = cast(LLMResource, context.resources.mini_llm).client
-    extractor = cast(TextExtractor, context.resources.text_extractor)
-
-    parsed = extractor.from_html(privacy_policy_html)
+    parsed = extractor.from_html(await page.content())
     prepped = extractor.prep_llm_input(parsed)
     mini_llm_with_parser = mini_llm.with_structured_output(ExtractedPrivacyPolicyOutput)
     chain = EXTRACT_PRIVACY_POLICY_TEXT | mini_llm_with_parser
-    result = cast(ExtractedPrivacyPolicyOutput, await chain.ainvoke({"contents": prepped}))
-    context.log.info(f"Extracted privacy policy text lines {result.start_line!r} ... {result.end_line!r}")
-    contents = extractor.parse_region(parsed, start_line=result.start_line, end_line=result.end_line)
+    result = cast(
+        ExtractedPrivacyPolicyOutput, await chain.ainvoke({"contents": prepped})
+    )
+    context.log.info(
+        f"Extracted privacy policy text lines {result.start_line!r} ... {result.end_line!r}"
+    )
+    contents = extractor.parse_region(
+        parsed, start_line=result.start_line, end_line=result.end_line
+    )
 
     yield Output(
         contents,
         output_name="privacy_policy_text",
         metadata={
-            "preview": MetadataValue.md(contents[:settings.preview_length]),
-            "explanation": MetadataValue.md(result.explanation)
+            "preview": MetadataValue.md(contents[: settings.preview_length]),
+            "explanation": MetadataValue.md(result.explanation),
         },
     )
 
@@ -302,13 +347,16 @@ async def extract_privacy_policy(context: AssetExecutionContext, privacy_policy_
     },
 )
 async def extract_ccpa_policy(
-        context: AssetExecutionContext, privacy_policy_text: str, privacy_policy_url: str
+    context: AssetExecutionContext, privacy_policy_text: str, privacy_policy_url: str
 ):
     llm = cast(LLMResource, context.resources.llm).client
     mini_llm = cast(LLMResource, context.resources.mini_llm).client
     extractor = cast(TextExtractor, context.resources.text_extractor)
-    extraction_result, _ = await attempt_ccpa_extraction(llm=mini_llm, text=privacy_policy_text, logger=context.log,
-                                                         extractor=extractor)
+    bm = cast(BrowserManager, context.resources.browser_manager)
+
+    extraction_result, _ = await attempt_ccpa_extraction(
+        llm=mini_llm, text=privacy_policy_text, logger=context.log, extractor=extractor
+    )
 
     if extraction_result:
         context.log.info(f"CCPA rights found at {privacy_policy_url}")
@@ -321,7 +369,9 @@ async def extract_ccpa_policy(
             extraction_result,
             output_name="ccpa_rights_text",
             metadata={
-                "preview": MetadataValue.md(extraction_result[:settings.preview_length]),
+                "preview": MetadataValue.md(
+                    extraction_result[: settings.preview_length]
+                ),
                 "explanation": MetadataValue.text(extraction_result),
             },
         )
@@ -332,10 +382,9 @@ async def extract_ccpa_policy(
     trace_file = tempfile.NamedTemporaryFile(
         prefix="ccpa_trace_", suffix=".zip", delete=False
     )
-    bm = cast(BrowserManager, context.resources.browser_manager)
 
     async with bm.managed_context(
-            use_tracing=True, tracing_output_path=trace_file.name
+        use_tracing=True, tracing_output_path=trace_file.name
     ) as session:
         session = cast(ManagedSession, session)
         page = await session.browser_context.new_page()
@@ -345,8 +394,8 @@ async def extract_ccpa_policy(
             start_page=page,
             llm=llm,
             task="The following privacy policy does NOT contain any privacy rights specific to California residents. "
-                 "Navigate to the page that lists such rights listed in legal language, then you are DONE. If you CANNOT"
-                 "find that information, you FAILED.",
+            "Navigate to the page that lists such rights listed in legal language, then you are DONE. If you CANNOT"
+            "find that information, you FAILED.",
         )
         agent_result, page = await agent.run(max_steps=10)
 
@@ -358,8 +407,9 @@ async def extract_ccpa_policy(
         ccpa_text = extractor.from_html(page_html)
 
         # 4) Re-extract from the discovered page
-        result, explanation = await attempt_ccpa_extraction(llm=mini_llm, text=ccpa_text, logger=context.log,
-                                                            extractor=extractor)
+        result, explanation = await attempt_ccpa_extraction(
+            llm=mini_llm, text=ccpa_text, logger=context.log, extractor=extractor
+        )
         if not result:
             raise Failure("Failed to extract CCPA rights from the located page")
 
@@ -372,7 +422,7 @@ async def extract_ccpa_policy(
             result,
             output_name="ccpa_rights_text",
             metadata={
-                "preview": MetadataValue.md(result[:settings.preview_length]),
+                "preview": MetadataValue.md(result[: settings.preview_length]),
                 "explanation": MetadataValue.text(explanation),
             },
         )

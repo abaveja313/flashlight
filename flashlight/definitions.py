@@ -2,7 +2,7 @@ from dagster import Definitions, define_asset_job
 from dagster_aws.s3 import S3Resource
 
 from flashlight.assets import (
-    find_privacy_policy,
+    prepare_window,
     extract_privacy_policy,
     extract_ccpa_policy,
     analyze_footer_screenshot,
@@ -11,13 +11,14 @@ from flashlight.resources import (
     settings,
     config_resource,
     LLMResource,
-    browser_manager, TextExtractor,
+    browser_manager,
+    TextExtractor,
 )
 from flashlight.resources.s3_file_manager import S3FileIOManager
 
 defs = Definitions(
     assets=[
-        find_privacy_policy,
+        prepare_window,
         extract_privacy_policy,
         extract_ccpa_policy,
         analyze_footer_screenshot,
@@ -45,6 +46,6 @@ defs = Definitions(
             temperature=settings.mini_llm_temperature,
             provider=settings.mini_llm_provider,
             api_key=settings.mini_llm_api_key,
-        )
+        ),
     },
 )
